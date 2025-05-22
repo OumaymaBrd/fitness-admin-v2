@@ -80,9 +80,18 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
     
     // Profil utilisateur
+    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Routes supplémentaires pour le profil
+    Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.update.password');
+    Route::patch('/profile/fitness', [ProfileController::class, 'updateFitness'])->name('profile.update.fitness');
+    Route::patch('/profile/preferences', [ProfileController::class, 'updatePreferences'])->name('profile.update.preferences');
+    Route::patch('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.update.photo');
 });
 
 require __DIR__.'/auth.php';

@@ -8,6 +8,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -23,6 +24,27 @@ class User extends Authenticatable
         'email',
         'password',
         'last_login_at',
+        'phone',
+        'birthdate',
+        'gender',
+        'address',
+        'bio',
+        'height',
+        'weight',
+        'fitness_goal',
+        'activity_level',
+        'preferred_activities',
+        'medical_conditions',
+        'dietary_restrictions',
+        'profile_photo',
+        'email_notifications',
+        'push_notifications',
+        'workout_reminders',
+        'achievement_notifications',
+        'newsletter',
+        'theme',
+        'language',
+        'units',
     ];
 
     /**
@@ -43,6 +65,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
+        'birthdate' => 'date',
     ];
 
     /**
@@ -85,8 +108,12 @@ class User extends Authenticatable
      */
     public function adminlte_image()
     {
-        // Retourne une image par défaut ou l'image de l'utilisateur si elle existe
-        return 'https://picsum.photos/300/300';
+        if ($this->profile_photo && Storage::disk('public')->exists($this->profile_photo)) {
+            return Storage::url($this->profile_photo);
+        }
+        
+        // Image par défaut
+        return 'https://adminlte.io/themes/v3/dist/img/user2-160x160.jpg';
     }
 
     /**
