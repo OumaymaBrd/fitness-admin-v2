@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\Cache;
 
 class ProfileController extends Controller
 {
@@ -34,7 +35,7 @@ class ProfileController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'phone' => ['nullable', 'string', 'max:20'],
             'birthdate' => ['nullable', 'date'],
             'gender' => ['nullable', 'string', 'in:male,female,other'],
@@ -46,6 +47,38 @@ class ProfileController extends Controller
         $user->save();
 
         return redirect()->route('profile.edit')->with('status', 'Profil mis à jour avec succès.');
+    }
+
+    /**
+     * Update the user's profile photo.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function updatePhoto(Request $request)
+    {
+        $request->validate([
+            'profile_photo' => ['required', 'image', 'max:2048'], // 2MB max
+        ]);
+
+        $user = Auth::user();
+
+        // Delete old photo if exists
+        if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
+            Storage::disk('public')->delete($user->profile_photo);
+        }
+
+        // Store new photo
+        $path = $request->file('profile_photo')->store('profile-photos', 'public');
+        
+        // Enregistrer le chemin dans la base de données
+        $user->profile_photo = $path;
+        $user->save();
+
+        // Vider le cache pour s'assurer que la nouvelle image est affichée
+        Cache::forget('user_' . $user->id . '_profile_image');
+
+        return redirect()->route('profile.edit')->with('status', 'Photo de profil mise à jour avec succès.');
     }
 
     /**
@@ -62,7 +95,7 @@ class ProfileController extends Controller
         ]);
 
         $user = Auth::user();
-        $user->password = $validated['password'];
+        $user->password = Hash::make($validated['password']);
         $user->save();
 
         return redirect()->route('profile.edit')->with('status', 'Mot de passe mis à jour avec succès.');
@@ -128,33 +161,6 @@ class ProfileController extends Controller
         $user->save();
 
         return redirect()->route('profile.edit')->with('status', 'Préférences mises à jour avec succès.');
-    }
-
-    /**
-     * Update the user's profile photo.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function updatePhoto(Request $request)
-    {
-        $request->validate([
-            'profile_photo' => ['required', 'image', 'max:2048'], // 2MB max
-        ]);
-
-        $user = Auth::user();
-
-        // Delete old photo if exists
-        if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
-            Storage::disk('public')->delete($user->profile_photo);
-        }
-
-        // Store new photo
-        $path = $request->file('profile_photo')->store('profile-photos', 'public');
-        $user->profile_photo = $path;
-        $user->save();
-
-        return redirect()->route('profile.edit')->with('status', 'Photo de profil mise à jour avec succès.');
     }
 
     /**
